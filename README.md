@@ -21,6 +21,7 @@ cd file_copy_tool
 cargo test -r
 
 cp target/release/file_copy_tool ~/bin/
+cp target/release/revert_links ~/bin/
 
 ```
 
@@ -39,5 +40,19 @@ file_copy_tool my_work_area my_backup_area '.fastq.gz'
 If you run this a second time the tool will remove all fastq.gz files from the my_work_area and replace them with soft links to the my_backup_area files. To save space you should run it a second time. But you can check if the backup data is OK before you do so.
 
 
+# And if all that was a stupid error?!
 
+You have copied the files into a new location and your original file structure is no cluttered with links!
+But you want to move all data into a new location or you need to move the backup directory somewhere else -
+in other words **I need to get rid of the links I just produced**.
+
+I have the solution:
+
+```
+Usage: revert_links <folder>  <pattern1> [<pattern2> ...]
+```
+
+This will undo the linking of the files - including the sha check that the files have been copied correctly.
+
+Afterwards you can simply delete the backup directory. Say you can do that IF YOU USED THE SAME PATTERNS ;-)
 
