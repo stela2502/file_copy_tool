@@ -84,7 +84,7 @@ fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, patter
                         }else {
                             panic!("I could not get the abs path for {:?}!",file_path);
                         }
-                        println!("Created symbolic link for '{:?}' at '{:?}'", abs_target, file_path);
+                        println!("Created symbolic link for '{:?}' at '{:?}'", target_path, file_path);
                     }
                     break; // Stop processing of one file after copying
                 }

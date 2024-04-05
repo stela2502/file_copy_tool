@@ -1,4 +1,4 @@
-[![Rust](https://github.com/stela2502/file_copy_tool/actions/workflows/rust.yml/badge.svg?branch=main2)](https://github.com/stela2502/file_copy_tool/actions/workflows/rust.yml)
+[![Rust](https://github.com/stela2502/file_copy_tool/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/stela2502/file_copy_tool/actions/workflows/rust.yml)
 
 # file_copy_tool
 
