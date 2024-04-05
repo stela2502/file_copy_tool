@@ -1,3 +1,5 @@
+[![Rust](https://github.com/stela2502/file_copy_tool/actions/workflows/rust.yml/badge.svg?branch=main2)](https://github.com/stela2502/file_copy_tool/actions/workflows/rust.yml)
+
 # file_copy_tool
 
 This is a simple recursive file copy tool that allows to copy any kind of file from a source folder to a target folder,
