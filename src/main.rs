@@ -58,7 +58,7 @@ fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, patter
                         // Compare MD5 hashes
                         if source_md5 == target_md5 {
                             // here we can savely remove the old file from the folder
-                            println!("MD5 hashes match. Files are copied safely - removing the source version and replacing it with a link");
+                            //println!("MD5 hashes match. Files are copied safely - removing the source version and replacing it with a link");
                             //println!("MD5 hashes match. Files are copied safely.");
                         } else {
                             eprintln!("MD5 hashes don't match. Files may not be copied correctly.");
@@ -71,7 +71,7 @@ fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, patter
 
                         }
                     } else {
-                        println!("File '{:?}' already exists, replacing with a symbolic link.", target_path);
+                        println!("File '{:?}' already exists, replacing the source with a symbolic link to it.", target_path);
                         if let Ok(abs_target) = fs::canonicalize(&target_path) {
                             if let Err(err) = fs::remove_file(&file_path) {
                                 eprintln!("Error removing file: {}", err);
@@ -84,7 +84,7 @@ fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, patter
                         }else {
                             panic!("I could not get the abs path for {:?}!",file_path);
                         }
-                        println!("Created symbolic link for '{:?}' at '{:?}'", file_path, target_path);
+                        println!("Created symbolic link for '{:?}' at '{:?}'", abs_target, file_path);
                     }
                     break; // Stop processing of one file after copying
                 }
