@@ -40,5 +40,7 @@ mod tests {
 	    });
 
 	    assert_ne!(hash_a, hash_c, "Hashes are different: {} {}", hash_a, hash_c);
+
+	    fs::remove_dir_all(source_folder).unwrap();
     }
 }

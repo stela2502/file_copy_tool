@@ -58,11 +58,7 @@ pub fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, pa
                         let target_md5 = calculate_sha256(&target_path).unwrap();
                         
                         // Compare MD5 hashes
-                        if source_md5 == target_md5 {
-                            // here we can savely remove the old file from the folder
-                            //println!("MD5 hashes match. Files are copied safely - removing the source version and replacing it with a link");
-                            //println!("MD5 hashes match. Files are copied safely.");
-                        } else {
+                        if source_md5 != target_md5 {
                             eprintln!("MD5 hashes don't match. Files may not be copied correctly.");
                             if let Err(err) = fs::remove_file(&target_path) {
                                 eprintln!("Error removing faulty file: {}", err);
@@ -70,7 +66,6 @@ pub fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, pa
                             }else {
                                 eprintln!("Problematic copy has been removed.");
                             }
-
                         }
                     } else {
                         println!("File '{:?}' already exists, replacing the source with a symbolic link to it.", target_path);
@@ -137,6 +132,7 @@ pub fn revert_links(target_folder: &str, patterns: &[String]) {
                                     if let Err(link_err) = symlink(&target_path, &file_path) {
                                         eprintln!("Failed to re-establish symbolic link {}: {}", file_path.display(), link_err);
                                     }
+                                    eprintln!("Copy failed - sh256 hashes did not matchfor file {}!\n", target_path.display());
                                     continue;
                                 }
                                 println!("Reverted the process for {}: Removed symbolic link and replaced it with a copy of the target file.", file_path.display());
