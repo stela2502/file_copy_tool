@@ -27,6 +27,7 @@ fn create_symlink(src: &Path, dst: &Path) -> std::io::Result<()> {
 pub fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, patterns: &[String]) {
 
     // the copy returns this error if the file alredy existed:
+    let mut buffer = [0; 1024 * 1024]; // 1 MB buffer
 
     for entry in WalkDir::new(source_folder).into_iter().filter_map(|e| e.ok()) {
         let file_path = entry.path();
@@ -43,7 +44,7 @@ pub fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, pa
                 if file_name.ends_with(pattern) {
                     let target_path = Path::new(target_folder).join(file_path.strip_prefix(source_folder).unwrap());
                     
-                    match copy_file_with_hash_check(&file_path, &target_path) {
+                    match copy_file_with_hash_check(&file_path, &target_path, &mut buffer) {
                         Ok(_) => (),
                         Err(ref err) if err.to_string() == "link target existed" => {
                             println!("repacing {:?} with a link to {:?}", &file_path, &target_path);
@@ -59,6 +60,8 @@ pub fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, pa
 }
 
 pub fn revert_links(target_folder: &str, patterns: &[String]) {
+    let mut buffer = [0; 1024 * 1024]; // 1 MB buffer
+
     for entry in WalkDir::new(target_folder).into_iter().filter_map(|e| e.ok()) {
         let file_path = entry.path();
         if file_path.is_file() {
@@ -72,7 +75,7 @@ pub fn revert_links(target_folder: &str, patterns: &[String]) {
 
             for pattern in patterns {
                 if file_name.ends_with(pattern) {
-                    if let Err(err) = revert_symlink(&file_path) {
+                    if let Err(err) = revert_symlink(&file_path, &mut buffer) {
                         eprintln!("{}", err);
                     }
                 }
@@ -81,14 +84,14 @@ pub fn revert_links(target_folder: &str, patterns: &[String]) {
     }
 }
 
-pub fn calculate_sha256(file_path: &Path) -> io::Result<String> {
+pub fn calculate_sha256(file_path: &Path, buffer: &mut [u8] ) -> io::Result<String> {
     let mut file = fs::File::open(file_path)?;
     let mut hasher = Sha256::new();
     
-    let mut buffer = [0; 1024 * 1024]; // 1 MB buffer
-    while let Ok(bytes_read) = file.read(&mut buffer) {
+    //let mut buffer = [0; 1024 * 1024]; // 1 MB buffer
+    while let Ok(bytes_read) = file.read( buffer) {
         if bytes_read > 0{
-            panic!("calculate_sha256 read {} bytes", bytes_read);
+            println!("calculate_sha256 read {} bytes", bytes_read);
             hasher.update(&buffer[..bytes_read]);
         } else {
             break;
@@ -101,7 +104,7 @@ pub fn calculate_sha256(file_path: &Path) -> io::Result<String> {
     Ok(hash_hex)
 }
 
-fn copy_file_with_hash_check(source_path: &Path, target_path: &Path) -> io::Result<()> {
+pub fn copy_file_with_hash_check(source_path: &Path, target_path: &Path, buffer: &mut [u8]) -> io::Result<()> {
     if !target_path.exists() {
         if let Some(parent_dir) = target_path.parent() {
             fs::create_dir_all(parent_dir)?;
@@ -111,13 +114,13 @@ fn copy_file_with_hash_check(source_path: &Path, target_path: &Path) -> io::Resu
 
         // Calculate and compare hashes
         println!("Calculate hash source");
-        let source_md5 = match calculate_sha256(&source_path){
+        let source_md5 = match calculate_sha256(&source_path, buffer){
             Ok(v) => v,
             Err(err) => panic!("calculate_sha256 source hit a wall {err}"),
         };
         println!("Calculate hash target");
         
-        let target_md5 = match calculate_sha256(&target_path){
+        let target_md5 = match calculate_sha256(&target_path, buffer){
             Ok(v) => v,
             Err(err) => panic!("calculate_sha256 target hit a wall {err}"),
         };
@@ -133,10 +136,13 @@ fn copy_file_with_hash_check(source_path: &Path, target_path: &Path) -> io::Resu
     }
 }
 
-fn revert_symlink(file_path: &Path) -> io::Result<()> {
+pub fn revert_symlink(file_path: &Path, buffer: &mut [u8;  1024 * 1024]) -> io::Result<()> {
     if let Ok(target_path) = fs::read_link(&file_path) {
-        fs::remove_file(&file_path)?;
-        if let Err(err) = copy_file_with_hash_check(&target_path, &file_path){
+        match fs::remove_file(&file_path){
+            Ok(_) => (),
+            Err(err) => panic!("remove file hit a wall {err}")
+        };
+        if let Err(err) = copy_file_with_hash_check(&target_path, &file_path, buffer){
         	eprintln!("{}", err);
         }
         println!("Reverted the process for {}: Removed symbolic link and replaced it with a copy of the target file.", file_path.display());
@@ -144,7 +150,7 @@ fn revert_symlink(file_path: &Path) -> io::Result<()> {
     Ok(())
 }
 
-fn replace_with_symlink( file_2_replace: &Path, link_target: &Path) -> Option<()> {
+pub fn replace_with_symlink( file_2_replace: &Path, link_target: &Path) -> Option<()> {
 
     // Create the symlink
     if let Ok(abs_target) = fs::canonicalize(&link_target) {
