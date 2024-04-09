@@ -51,7 +51,7 @@ mod tests {
         .expect("Failed to execute command");
         
         // Check if the tool exited successfully
-        assert!(output.status.success());
+        assert!(output.status.success(), "Problem running the tool?!");
 
         // Check if the file is copied and its hash matches
 

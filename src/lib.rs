@@ -3,11 +3,26 @@
 use std::fs;
 use std::path::Path;
 use std::io::{self, Read};
-use std::os::unix::fs::symlink;
 use walkdir::WalkDir;
 use sha2::Digest;
 use sha2::Sha256;
 use hex::encode as hex_encode; // Add this line
+
+#[cfg(windows)]
+use std::os::windows::fs::{symlink_file};
+#[cfg(unix)]
+use std::os::unix::fs::{symlink};
+
+
+#[cfg(windows)]
+fn create_symlink(src: &Path, dst: &Path) -> std::io::Result<()> {
+    symlink_file(src, dst)
+}
+
+#[cfg(unix)]
+fn create_symlink(src: &Path, dst: &Path) -> std::io::Result<()> {
+    symlink(src, dst)
+}
 
 
 pub fn calculate_sha256(file_path: &Path) -> io::Result<String> {
@@ -74,7 +89,7 @@ pub fn copy_files_matching_patterns(source_folder: &str, target_folder: &str, pa
                                 eprintln!("Error removing file: {}", err);
                                 continue;
                             }
-                            if let Err(err) = symlink(&abs_target, &file_path) {
+                            if let Err(err) = create_symlink(&abs_target, &file_path) {
                                 eprintln!("Error creating symlink: {}", err);
                                 continue;
                             }
@@ -117,7 +132,7 @@ pub fn revert_links(target_folder: &str, patterns: &[String]) {
                                 if let Err(err) = fs::copy(&target_path, &file_path) {
                                     eprintln!("Failed to copy {} to {}: {}", target_path.display(), file_path.display(), err);
                                     // Re-establish the symbolic link if the copy fails
-                                    if let Err(link_err) = symlink(&target_path, &file_path) {
+                                    if let Err(link_err) = create_symlink(&target_path, &file_path) {
                                         eprintln!("Failed to re-establish symbolic link {}: {}", file_path.display(), link_err);
                                     }
                                     continue;
@@ -129,7 +144,7 @@ pub fn revert_links(target_folder: &str, patterns: &[String]) {
                                         eprintln!("Error removing faulty file: {}", err);
                                         continue;
                                     }
-                                    if let Err(link_err) = symlink(&target_path, &file_path) {
+                                    if let Err(link_err) = create_symlink(&target_path, &file_path) {
                                         eprintln!("Failed to re-establish symbolic link {}: {}", file_path.display(), link_err);
                                     }
                                     eprintln!("Copy failed - sh256 hashes did not matchfor file {}!\n", target_path.display());
