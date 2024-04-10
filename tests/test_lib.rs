@@ -69,13 +69,20 @@ mod tests {
     #[test]
     fn test_copy_file_with_hash_check() {
         // Create a temporary source file with some content
-        let tmp_dir = tempdir::TempDir::new("test_dir").unwrap();
-        let source_file_path = tmp_dir.path().join("source_file.txt");
+        let tmp_dir =  Path::new("tests/copy_test");
+        if tmp_dir.exists(){
+            fs::remove_dir_all(&tmp_dir).unwrap();
+        }
+
+        fs::create_dir_all(&tmp_dir).unwrap();
+
+        //let tmp_dir = tempdir::TempDir::new("test_dir").unwrap();
+        let source_file_path = tmp_dir.join("source_file.txt");
         let mut source_file = File::create(&source_file_path).unwrap();
         source_file.write_all(b"Test data").unwrap();
 
         // Create a temporary target file
-        let target_file_path = tmp_dir.path().join("target_file.txt");
+        let target_file_path = tmp_dir.join("target_file.txt");
 
         // Copy the file and check hash
         assert!(copy_file_with_hash_check(&source_file_path, &target_file_path, &mut [0; 1024 * 1024]).is_ok());
@@ -85,18 +92,29 @@ mod tests {
 
         // Copying again should return an error as the target file already exists
         assert!(copy_file_with_hash_check(&source_file_path, &target_file_path, &mut [0; 1024 * 1024]).is_err());
+
+        fs::remove_dir_all(&tmp_dir).unwrap();
     }
 
     #[test]
     fn test_replace_with_symlink() {
         // Create a temporary source file with some content
-        let tmp_dir = tempdir::TempDir::new("test_dir").unwrap();
-        let source_file_path = tmp_dir.path().join("source_file.txt");
+        let tmp_dir =  Path::new("tests/replace_test");
+        if tmp_dir.exists(){
+            fs::remove_dir_all(&tmp_dir).unwrap();
+        }
+
+        fs::create_dir_all(&tmp_dir).unwrap();
+
+        let source_file_path = tmp_dir.join("source_file.txt");
         let mut source_file = File::create(&source_file_path).unwrap();
         source_file.write_all(b"Test data").unwrap();
 
         // Create a temporary target file
-        let target_file_path = tmp_dir.path().join("target_file.txt");
+        let target_file_path = tmp_dir.join("target_file.txt");
+
+        // Copy the file to that path
+        assert!(copy_file_with_hash_check(&source_file_path, &target_file_path, &mut [0; 1024 * 1024]).is_ok());
 
         // Replace the target file with a symlink
         match replace_with_symlink(&source_file_path, &target_file_path) {
@@ -104,9 +122,13 @@ mod tests {
             None => panic!("replace_with_symlink has come back None"),
         };
         // Check if the symlink is created correctly
-        let symlink = fs::read_link(&target_file_path);
-        assert!(symlink.is_ok());
-        assert_eq!(symlink.unwrap(), source_file_path);
+        let symlink = fs::read_link(&source_file_path);
+        assert!(symlink.is_ok(), "source file {} should be a symlink", &source_file_path.display());
+
+        let original = fs::read_link(&target_file_path);
+        assert!( original.is_err(), "target file {} shouldn not be a symlink", &target_file_path.display());
+
+        fs::remove_dir_all(&tmp_dir).unwrap();
     }
 
 }

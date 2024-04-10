@@ -19,6 +19,8 @@ fn main() {
     let patterns = &args[3..];
 
     copy_files_matching_patterns(source_folder, target_folder, patterns);
+
+    println!("Finished");
 }
 
 
