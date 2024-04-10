@@ -13,5 +13,7 @@ fn main() {
     let patterns = &args[2..];
 
     revert_links(folder, patterns);
+
+    println!("Finished");
 }
 

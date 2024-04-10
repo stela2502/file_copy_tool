@@ -110,11 +110,11 @@ mod tests {
 
         for copied_file in &good {
         	assert!(Path::new(copied_file).exists(), "file {copied_file} has not been copied?!");
-        	if let Ok(metadata) = fs::metadata(copied_file) {
+        	if let Ok(metadata) = fs::symlink_metadata(copied_file) {
                 assert!( ! metadata.file_type().is_symlink(), "target file {copied_file} is a symlink?!")
             }
             let source_file = copied_file.replace("tests/target", "tests/source");
-            if let Ok(metadata) = fs::metadata(&source_file) {
+            if let Ok(metadata) = fs::symlink_metadata(&source_file) {
                 assert!( ! metadata.file_type().is_symlink(), "source file {copied_file} is still a symlink after revert_links?!")
             }
         }
